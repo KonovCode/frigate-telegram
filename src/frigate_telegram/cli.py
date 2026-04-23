@@ -16,8 +16,9 @@ def init():
 def start():
     from frigate_telegram.config import load_config
 
-    config = load_config("config.yaml")   
-    print(f"Запуск... Frigate: {config.frigate.url}") 
+    config = load_config("config.yaml")
+    print(f"Запуск... Frigate: {config.frigate.url}")
+    print("Сервис будет реализован в service.py")
 
 def main():
     if len(sys.argv) < 2:
