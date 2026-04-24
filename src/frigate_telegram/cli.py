@@ -4,21 +4,28 @@ from pathlib import Path
 
 
 def init(): 
-    dest = Path("config.yaml")
+    dest = Path(".env")
     if dest.exists():
-        print("config.yaml уже существует")
+        print(".env уже существует")
         sys.exit(1)
 
-    example = Path(__file__).parent.parent.parent / "config.example.yaml"
+    example = Path(__file__).parent.parent.parent / ".env.example"
     shutil.copy(example, dest)
-    print("config.yaml создан. Заполни его и запусти: frigate-telegram start")
+    print(".env создан. Заполни его и запусти: frigate-telegram start")
 
 def start():
-    from frigate_telegram.config import load_config
+    import asyncio
+    from frigate_telegram.config import AppConfig
+    from frigate_telegram.service import Service
 
-    config = load_config("config.yaml")
-    print(f"Запуск... Frigate: {config.frigate.url}")
-    print("Сервис будет реализован в service.py")
+    config = AppConfig()
+    service = Service(config)
+    
+    try:
+        asyncio.run(service.run())
+    except KeyboardInterrupt:
+        print("Сервис остановлен")
+
 
 def main():
     if len(sys.argv) < 2:

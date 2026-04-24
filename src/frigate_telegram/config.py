@@ -1,17 +1,5 @@
 from pydantic import BaseModel
-import yaml
-from pathlib import Path
-
-class FrigateConfig(BaseModel):
-    url: str
-
-class MqttConfig(BaseModel):
-    host: str
-    port: int = 1883
-
-class TelegramConfig(BaseModel): 
-    token: str
-    chat_id: str        
+from pydantic_settings import BaseSettings, SettingsConfigDict    
 
 class DetectionConfig(BaseModel): 
     enabled: bool = True
@@ -23,16 +11,15 @@ class DetectionConfig(BaseModel):
 class NotificationsConfig(BaseModel): 
     detection: DetectionConfig = DetectionConfig()
 
-class AppConfig(BaseModel): 
-    frigate: FrigateConfig
-    mqtt: MqttConfig
-    telegram: TelegramConfig
-    notifications: NotificationsConfig = NotificationsConfig()
-
-
-
-def load_config(path: str = "config.yaml") -> AppConfig: 
-    config_path = Path(path)
-    with open(config_path) as f:
-        data = yaml.safe_load(f)
-    return AppConfig(**data)    
+class AppConfig(BaseSettings): 
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__",
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
+    frigate_url: str
+    mqtt_host: str
+    mqtt_port: int = 1883
+    telegram_token: str
+    telegram_chat_id: str
+    notifications: NotificationsConfig = NotificationsConfig() 
