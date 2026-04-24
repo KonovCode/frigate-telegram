@@ -21,5 +21,5 @@ class AppConfig(BaseSettings):
     mqtt_host: str
     mqtt_port: int = 1883
     telegram_token: str
-    telegram_chat_id: str
+    telegram_chat_id: list[str]
     notifications: NotificationsConfig = NotificationsConfig() 

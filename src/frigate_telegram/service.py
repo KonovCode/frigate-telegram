@@ -34,6 +34,7 @@ class Service:
 
         detection_cfg = self.config.notifications.detection
         if not detection_cfg.enabled:
+            log.info("skip: notifications disabled")
             return 
         if label not in detection_cfg.labels:
             log.info("skip: label '%s' not in %s", label, detection_cfg.labels)
@@ -46,11 +47,14 @@ class Service:
 
         caption = f"{camera}: {label} {round(score * 100)}%" 
 
-        if detection_cfg.send_snapshot:
-            snapshot = await self.frigate.get_snapshot(camera)
-            await self.telegram.send_photo(snapshot, caption=caption)
-        else: 
-            await self.telegram.send_message(caption)  
+        try :
+            if detection_cfg.send_snapshot:
+                snapshot = await self.frigate.get_snapshot(camera)
+                await self.telegram.send_photo(snapshot, caption=caption)
+            else: 
+                await self.telegram.send_message(caption)  
+        except: 
+            log.exception("Ошибка при отправке!")
 
     async def run(self) -> None:
         log.info("Запуск сервиса. Frigate: %s", self.config.frigate_url)
