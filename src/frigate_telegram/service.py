@@ -59,6 +59,9 @@ class Service:
         if label not in detection_cfg.labels:
             log.info("skip: label '%s' not in %s", label, detection_cfg.labels)
             return
+        if detection_cfg.cameras and camera not in detection_cfg.cameras:
+            log.info("skip: camera '%s' not in '%s'", camera, detection_cfg.cameras)
+            return
         if score < detection_cfg.min_score:
             if event_type == "new":
                 self.pending_events.add(event_id)
