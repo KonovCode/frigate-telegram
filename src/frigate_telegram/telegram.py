@@ -1,5 +1,5 @@
 import httpx
-
+import logging as log
 
 class TelegramClient: 
 
@@ -10,21 +10,29 @@ class TelegramClient:
         self.client = httpx.AsyncClient()
 
     async def send_message(self, text: str) -> None:
-        for cid in self.chat_id :
-            await self.client.post(f"{self.base_url}/sendMessage", json={
-                "chat_id": cid,
-                "text": text,
-            })    
+        for cid in self.chat_id:
+            try:
+                response = await self.client.post(f"{self.base_url}/sendMessage", json={
+                    "chat_id": cid,
+                    "text": text,
+                })
+                response.raise_for_status()
+            except Exception:
+                log.exception("Ошибка отправки в chat_id=%s", cid)
 
     async def send_photo(self, photo: bytes, caption: str = "") -> None:
-        for cid in self.chat_id :
-            await self.client.post(f"{self.base_url}/sendPhoto", files={
-                "photo": ("snapshot.jpg", photo, "image/jpeg")},
-                data={
-                    "chat_id": cid,
-                    "caption": caption,
-                }
-            )        
+        for cid in self.chat_id:
+            try:
+                response = await self.client.post(f"{self.base_url}/sendPhoto", files={
+                    "photo": ("snapshot.jpg", photo, "image/jpeg")},
+                    data={
+                        "chat_id": cid,
+                        "caption": caption,
+                    }
+                )
+                response.raise_for_status()
+            except Exception:
+                log.exception("Ошибка отправки фото в chat_id=%s", cid)           
 
     async def close(self) -> None:
         await self.client.aclose()

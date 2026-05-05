@@ -1,6 +1,7 @@
 import json 
 import logging
 import aiomqtt as mqtt
+import asyncio
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger(__name__)
@@ -83,14 +84,26 @@ class Service:
         except Exception:
             log.exception("Ошибка при отправке!")
 
+    async def _listen(self, client: mqtt.Client) -> None:
+        await client.subscribe("frigate/events")
+        log.info("Подключились к MQTT")
+        async for message in client.messages:
+            payload = json.loads(message.payload)
+            await self.handle_event(payload)        
+
     async def run(self) -> None:
         log.info("Запуск сервиса. Frigate: %s", self.config.frigate_url)
+        delay = 1
         try:
-            async with mqtt.Client(self.config.mqtt_host, self.config.mqtt_port) as client:
-                await client.subscribe("frigate/events")
-                log.info("Подписка на frigate/events — ожидаем события...")
-                async for message in client.messages: 
-                    payload = json.loads(message.payload)
-                    await self.handle_event(payload)             
+            while True:
+                try:
+                    async with mqtt.Client(self.config.mqtt_host, self.config.mqtt_port) as client:
+                        delay = 1
+                        await self._listen(client)
+                except mqtt.MqttError:
+                    log.warning("MQTT упал. Переподключение через %s сек", delay)
+                    await asyncio.sleep(delay)
+                    delay = min(delay * 2, 60)                       
         finally:  
-            await self.telegram.close()      
+            await self.telegram.close()
+            await self.frigate.close()      
